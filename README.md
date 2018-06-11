@@ -1,5 +1,5 @@
 # Who's wolfery game
-num_player   #first input to decide number of identities verion 1.0 set as 6 people
+num_player   #first input to decide number of identities verion 1.0 set as 6 people/n
 day number   #turns of the game
 status of player: alive dying died    #dying means player was killed on the night
 
