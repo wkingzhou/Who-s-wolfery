@@ -5,7 +5,7 @@ Created on Mon Jun 11 15:19:34 2018
 @author: 09719446
 """
 from random import randint,shuffle
-from time import sleep
+from time import sleep,localtime
 num_player=6
 day=1
 def assign_roles(player):
@@ -33,25 +33,28 @@ msg_lib={"night":"It's night time close your eyes","day":"it's day time open you
 
 def get_response(msg,choices):
     response=raw_input(msg)
-    turn=0
+    start_time=[localtime().tm_min,localtime().tm_sec]
+    if start_time[0]==59:
+        time_offset=60
+    else:
+        time_offset=0
     while True:
-        if turn<=1:
-          if response.isdigit():
-             if int(response) in choices:
-                 return int(response)
-               
-             else:
-               response=raw_input("Invalid input Last Chance,"+msg)
-          else:
-             if response in choices:
-                 return response
-               
-             else:
-               response=raw_input("Invalid input Last Chance,"+msg)
+        if localtime().tm_min+time_offset>=start_time[0]+1 and localtime().tm_sec>=start_time[1]:
+           print "Timeout chance missed"
+           return -1
         else:
-           print "Invalid input. Chance missed"
-           return False
-        turn+=1
+            if response.isdigit():
+               response=int(response)
+               if response in choices:
+                   return response
+               else:
+                   response=raw_input("Invalid input. "+ msg)
+            else:
+               if response in choices:
+                   return response
+               else:
+                   response=raw_input("Invalid input. "+ msg)
+        
     
 def send_msg(msg,target):
     print target+":"+msg 
