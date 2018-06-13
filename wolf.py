@@ -5,9 +5,10 @@ Created on Mon Jun 11 15:19:34 2018
 @author: 09719446
 """
 from random import randint,shuffle
-from time import sleep,localtime
+import time
 num_player=6
 day=1
+
 def assign_roles(player):
     role_dict={}
     roles=["farmer","farmer","prohet","werewolf","werewolf","witch"]
@@ -31,17 +32,13 @@ msg_lib={"night":"It's night time close your eyes","day":"it's day time open you
         "antidote":"You have a bottle of antitode if you want to use,response y/n: ","toxicant":"You have a bottle of toxicant if you want to use,response y/n: ",\
         "wolf_kill":"Werewolfs choose a person to kill: "}       
 
-def get_response(msg,choices):
+def get_response(msg,choices,time_out_sec):
+    start_time=time.clock()
     response=raw_input(msg)
-    start_time=[localtime().tm_min,localtime().tm_sec]
-    if start_time[0]==59:
-        time_offset=60
-    else:
-        time_offset=0
     while True:
-        if localtime().tm_min+time_offset>=start_time[0]+1 and localtime().tm_sec>=start_time[1]:
+        if time.clock()>start_time+time_out_sec :
            print "Timeout chance missed"
-           return -1
+           return False
         else:
             if response.isdigit():
                response=int(response)
@@ -54,6 +51,7 @@ def get_response(msg,choices):
                    return response
                else:
                    response=raw_input("Invalid input. "+ msg)
+
         
     
 def send_msg(msg,target):
@@ -68,27 +66,29 @@ def get_mode(List):
          mode.remove(False)
          return mode[0]      
     else: 
-        return -1   #an indication of duplicated votes
+        return False   #an indication of duplicated votes
     
 def wolf_turn():
     response=[]
     target="werewolf"
+    timeout=30
     send_msg(msg_lib["eye_open"],target)
-    send_msg(msg_lib["wolf_kill"],target)
+    send_msg("Werewolf prepare to kill!",target)
     for role in roles:
         if roles[role][0] ==target and roles[role][1] =="alive":
-           response.append(get_response(msg_lib["wolf_kill"],roles.keys()))
+           response.append(get_response(msg_lib["wolf_kill"],roles.keys(),timeout))
     print response
     kill_num=get_mode(response)
-    if not kill_num ==-1 :
+    if not kill_num ==False :
         roles[kill_num][1]="dying"
     send_msg(msg_lib["eye_close"],"werewolf")
     return kill_num
 
 def prohet_turn():
     target="prohet"
+    timeout=20
     send_msg(msg_lib["eye_open"],target)
-    response=get_response(msg_lib["forcast_question"],roles.keys())
+    response=get_response(msg_lib["forcast_question"],roles.keys(),timeout)
     if prohet in roles:
       if response in roles.keys() :
          if roles[response][0]=="werewolf":
@@ -96,31 +96,47 @@ def prohet_turn():
          else: send_msg(msg_lib["forcast_good"],"prohet")
       else:
           send_msg("No Choice was made,your turn end.",target)
-    else: sleep(randint(1,5))
+    else: time.sleep(randint(1,5))
     send_msg(msg_lib["eye_close"],"prohet")
     return    
 
 def witch_turn(kill_num):
     target="witch"
+    timeout=20
     send_msg(msg_lib["eye_open"],target)
     if kill_num!=-1 and witch in roles and "antidote" in roles[witch]:
        send_msg("Last night number %d player was killed"%kill_num,target)
-       response=get_response(msg_lib["antidote"],["y","n"])
+       response=get_response(msg_lib["antidote"],["y","n"],timeout)
        if response =="y" :
            roles[kill_num][1]="alive"
            roles[witch][2]="antidote_used"
-    else: sleep(randint(1,5))  
+    else: time.sleep(randint(1,5))  
     if witch in roles and "toxicant" in roles[witch]:
-        response = get_response(msg_lib["toxicant"],["y","n"])
+        response = get_response(msg_lib["toxicant"],["y","n"],timeout)
         if response  == "y":
-            response = get_response("Select a player number to kill:",roles.keys())
+            response = get_response("Select a player number to kill:",roles.keys().timeout)
             if response !=False:
                 roles[response][1]="dying"
                 roles[witch][3]="toxicant_used"
                 return response
             else: send_msg("No target was put",target)
-        else: sleep(randint(1,5))   
-    else: sleep(randint(1,5))
+        else: time.sleep(randint(1,5))   
+    else: time.sleep(randint(1,5))
     return 
 
-#def night_end()
+def night_end():
+    died=[]
+    for key in roles:
+        if roles[key][2]=="dying":
+           del roles[key]
+           died.append(key)
+    send_msg("Day time open your eyes","All")
+    if died:
+        send_msg("Player died are %s"%died,"All")
+    if  died:
+        return died[0]
+    else:
+        return randint(1,6)
+        
+def day_time(start_speaker):
+    
