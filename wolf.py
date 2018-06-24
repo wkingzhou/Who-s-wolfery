@@ -6,6 +6,13 @@ Created on Mon Jun 11 15:19:34 2018
 """
 from random import randint,shuffle,choice
 import time
+import pygame
+
+pygame.mixer.init()
+def play_sound(msg):
+    pygame.mixer.music.load(msg+".mp3")
+    pygame.mixer.music.play()
+    
 num_player=6
 day=1
 game_status=True
@@ -125,7 +132,7 @@ def witch_turn(kill_num):
     target=witch
     timeout=30
     send_msg(msg_lib["eye_open"],target)
-    if kill_num!=-1 and witch in roles and "antidote" in roles[witch]:
+    if kill_num!=False and witch in roles and "antidote" in roles[witch]:
        send_msg("Last night number %d player was killed"%kill_num,target)
        response=get_response(msg_lib["antidote"],target,["y","n"],timeout)
        if response =="y" :
@@ -227,15 +234,18 @@ def day_time(start_speaker,order):
            send_msg("player %d has been voted out"%vote_result[0],"ALL")
            get_response("Start your death sentence, %s player: "%vote_result[0],vote_result[0])
     
-while game_status:
+while True:
     send_msg("Night has Fall Close all your eyes","ALL")
     killed=wolf_turn()
     prohet_turn()
     witch_turn(killed)
     died=night_end()
+    if not check_game_status():
+        break
     [start_speaker,order]=pre_day_time(died)
     day_time(start_speaker,order)
-    game_status=check_game_status()
+    if not check_game_status():
+        break
     day+=1
     print "%d Day"%day
     
